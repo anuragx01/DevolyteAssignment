@@ -77,7 +77,7 @@ function App() {
   const progress = todos.length ? Math.round(completedToday / todos.length * 100) : 0
   const sectionLabel = active.startsWith('category:') ? active.slice(9) : filters.find((item) => item.id === active)?.label || 'All tasks'
 
-  const add = async (body) => { try { await addTodo(body).unwrap(); setShowComposer(false); setNotice('Task added to your list.'); setTimeout(() => setNotice(''), 2400) } catch { setNotice('Could not add that task. Try again.'); setTimeout(() => setNotice(''), 3000) } }
+ const add = async (body) => { try { await addTodo(body).unwrap(); setShowComposer(false); setNotice('Task added to your list.'); setTimeout(() => setNotice(''), 2400) } catch { setNotice('Could not add that task. Try again.'); setTimeout(() => setNotice(''), 3000) } }
   const toggle = async (todo) => { try { await updateTodo({ id: todo.id, completed: !todo.completed }).unwrap() } catch { setNotice('Could not update that task.'); setTimeout(() => setNotice(''), 3000) } }
   const remove = async (todo) => { try { await deleteTodo(todo.id).unwrap(); setNotice('Task deleted.'); setTimeout(() => setNotice(''), 2400) } catch { setNotice('Could not delete that task. Try again.'); setTimeout(() => setNotice(''), 3000) } }
   const changePeriod = (amount) => setPeriod((current) => new Date(current.getFullYear(), current.getMonth() + amount, 1))
