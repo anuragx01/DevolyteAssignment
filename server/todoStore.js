@@ -32,6 +32,29 @@ function validateDueDate(value) {
   return value
 }
 
+function validateTimeRange(startTime, endTime) {
+  const start = startTime == null || startTime === '' ? null : startTime
+  const end = endTime == null || endTime === '' ? null : endTime
+  if ((start === null) !== (end === null)) {
+    const error = new Error('Enter both a start time and an end time.')
+    error.status = 400
+    throw error
+  }
+  if (start === null) return { startTime: null, endTime: null }
+  const validTime = (value) => typeof value === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)
+  if (!validTime(start) || !validTime(end)) {
+    const error = new Error('Choose valid start and end times.')
+    error.status = 400
+    throw error
+  }
+  if (end <= start) {
+    const error = new Error('End time must be later than start time.')
+    error.status = 400
+    throw error
+  }
+  return { startTime: start, endTime: end }
+}
+
 async function readLocalTodos() {
   try { return JSON.parse(await readFile(dataFile, 'utf8')) }
   catch (error) {
@@ -78,6 +101,7 @@ export async function addTodo(body = {}) {
     error.status = 400
     throw error
   }
+  const timeRange = validateTimeRange(body.startTime, body.endTime)
   const todo = {
     id: crypto.randomUUID(),
     title: title.slice(0, 180),
@@ -85,6 +109,7 @@ export async function addTodo(body = {}) {
     priority: ['low', 'medium', 'high'].includes(body.priority) ? body.priority : 'medium',
     category: typeof body.category === 'string' ? body.category.slice(0, 40) : 'Personal',
     dueDate: validateDueDate(body.dueDate),
+    ...timeRange,
     createdAt: new Date().toISOString(),
   }
   const todos = await readTodos()
@@ -103,6 +128,12 @@ export async function updateTodo(id, body = {}) {
   if (['low', 'medium', 'high'].includes(body.priority)) update.priority = body.priority
   if (typeof body.category === 'string') update.category = body.category.slice(0, 40)
   if (Object.hasOwn(body, 'dueDate')) update.dueDate = validateDueDate(body.dueDate)
+  if (Object.hasOwn(body, 'startTime') || Object.hasOwn(body, 'endTime')) {
+    Object.assign(update, validateTimeRange(
+      Object.hasOwn(body, 'startTime') ? body.startTime : todos[index].startTime,
+      Object.hasOwn(body, 'endTime') ? body.endTime : todos[index].endTime,
+    ))
+  }
   todos[index] = { ...todos[index], ...update }
   await writeTodos(todos)
   return todos[index]
