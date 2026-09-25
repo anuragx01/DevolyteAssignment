@@ -8,7 +8,6 @@ export const todosApi = createApi({
     getTodos: builder.query({ query: () => '/todos', providesTags: (result = []) => [{ type: 'Todo', id: 'LIST' }, ...result.map(({ id }) => ({ type: 'Todo', id }))] }),
     addTodo: builder.mutation({ query: (body) => ({ url: '/todos', method: 'POST', body }), invalidatesTags: [{ type: 'Todo', id: 'LIST' }] }),
     updateTodo: builder.mutation({ query: ({ id, ...body }) => ({ url: `/todos/${id}`, method: 'PATCH', body }), invalidatesTags: (_result, _error, { id }) => [{ type: 'Todo', id }, { type: 'Todo', id: 'LIST' }] }),
-    deleteTodo: builder.mutation({ query: (id) => ({ url: `/todos/${id}`, method: 'DELETE' }), invalidatesTags: (_result, _error, id) => [{ type: 'Todo', id }, { type: 'Todo', id: 'LIST' }] }),
   }),
 })
 
