@@ -65,6 +65,16 @@ app.patch('/api/todos/:id', async (req, res, next) => {
   } catch (error) { next(error) }
 })
 
+app.delete('/api/todos/:id', async (req, res, next) => {
+  try {
+    const todos = await readTodos()
+    const remainingTodos = todos.filter((todo) => todo.id !== req.params.id)
+    if (remainingTodos.length === todos.length) return res.status(404).json({ message: 'Task not found.' })
+    await saveTodos(remainingTodos)
+    res.status(204).end()
+  } catch (error) { next(error) }
+})
+
 app.use((error, _req, res, _next) => {
   console.error(error)
   res.status(500).json({ message: 'Something went wrong on the server.' })
