@@ -5,6 +5,33 @@ import { fileURLToPath } from 'node:url'
 const dataFile = path.join(path.dirname(fileURLToPath(import.meta.url)), 'data', 'todos.json')
 const blobPath = 'daylist/todos.json'
 
+function todayInIndia() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date())
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]))
+  return `${values.year}-${values.month}-${values.day}`
+}
+
+function validateDueDate(value) {
+  const today = todayInIndia()
+  if (value == null || value === '') return today
+  const parsed = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T00:00:00.000Z`)
+    : null
+  if (!parsed || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+    const error = new Error('Choose a valid due date.')
+    error.status = 400
+    throw error
+  }
+  if (value < today) {
+    const error = new Error('Due date must be today or a future day.')
+    error.status = 400
+    throw error
+  }
+  return value
+}
+
 async function readLocalTodos() {
   try { return JSON.parse(await readFile(dataFile, 'utf8')) }
   catch (error) {
@@ -57,7 +84,7 @@ export async function addTodo(body = {}) {
     completed: false,
     priority: ['low', 'medium', 'high'].includes(body.priority) ? body.priority : 'medium',
     category: typeof body.category === 'string' ? body.category.slice(0, 40) : 'Personal',
-    dueDate: typeof body.dueDate === 'string' ? body.dueDate : null,
+    dueDate: validateDueDate(body.dueDate),
     createdAt: new Date().toISOString(),
   }
   const todos = await readTodos()
@@ -75,7 +102,7 @@ export async function updateTodo(id, body = {}) {
   if (typeof body.completed === 'boolean') update.completed = body.completed
   if (['low', 'medium', 'high'].includes(body.priority)) update.priority = body.priority
   if (typeof body.category === 'string') update.category = body.category.slice(0, 40)
-  if (typeof body.dueDate === 'string' || body.dueDate === null) update.dueDate = body.dueDate
+  if (Object.hasOwn(body, 'dueDate')) update.dueDate = validateDueDate(body.dueDate)
   todos[index] = { ...todos[index], ...update }
   await writeTodos(todos)
   return todos[index]

@@ -15,6 +15,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed.' })
   } catch (error) {
     console.error('Todo item API error:', error)
-    return res.status(500).json({ message: 'Could not access task storage. Connect a Vercel Blob store and redeploy.' })
+    return res.status(error.status || 500).json({ message: error.status ? error.message : 'Could not access task storage. Connect a Vercel Blob store and redeploy.' })
   }
 }
